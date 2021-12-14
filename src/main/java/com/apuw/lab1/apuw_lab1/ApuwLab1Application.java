@@ -7,6 +7,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 
@@ -18,6 +20,11 @@ public class ApuwLab1Application {
 	}
 
 	@Bean
+	PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	@Bean
 	CommandLineRunner run(UserService userService) {
 		return  args -> {
 			userService.saveRole(new Role(null, "ROLE_USER"));
@@ -26,6 +33,7 @@ public class ApuwLab1Application {
 			userService.saveUser(new User(null, "Josip", "admin", "123", new ArrayList<>()));
 
 			userService.addRoleToUser("admin", "ROLE_ADMIN");
+			userService.addRoleToUser("admin", "ROLE_USER");
 		};
 	}
 }
