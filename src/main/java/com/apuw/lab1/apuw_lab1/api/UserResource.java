@@ -11,9 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -21,10 +18,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
@@ -36,30 +34,20 @@ public class UserResource {
 
 	private final UserService userService;
 
-	@GetMapping("/users")
-	public ResponseEntity<List<User>> getUsers() {
-		return ResponseEntity.ok().body(userService.getUsers());
-	}
 
-	@PostMapping("/users")
-	public ResponseEntity<User> saveUser(@RequestBody User user) {
-		User newUser = userService.saveUser(user);
-		URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/users" + newUser.getId()).toUriString());
-		return ResponseEntity.created(uri).body(newUser);
-	}
+
 
 	@PostMapping("/roles")
 	public ResponseEntity<Role> saveRole(@RequestBody Role role) {
 		Role newRole = userService.saveRole(role);
+		if (newRole == null) {
+			return  ResponseEntity.badRequest().build();
+		}
 		URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/roles" + newRole.getId()).toUriString());
 		return ResponseEntity.created(uri).body(newRole);
 	}
 
-	@PostMapping("users/{username}/roles")
-	public ResponseEntity<?> addRoleToUser (@RequestBody String roleName, @PathVariable("username") String username) {
-		userService.addRoleToUser(username, roleName);
-		return ResponseEntity.ok().build();
-	}
+
 
 	@GetMapping("/token/refresh")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {

@@ -1,9 +1,10 @@
-package com.apuw.lab1.apuw_lab1.service;
+package com.apuw.lab1.apuw_lab1.service.impl;
 
 import com.apuw.lab1.apuw_lab1.domain.Role;
 import com.apuw.lab1.apuw_lab1.domain.User;
 import com.apuw.lab1.apuw_lab1.repo.RoleRepo;
 import com.apuw.lab1.apuw_lab1.repo.UserRepo;
+import com.apuw.lab1.apuw_lab1.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -46,13 +47,56 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Override
 	public User saveUser(User user) {
+		if (userRepo.findByUsername(user.getUsername()) != null) {
+			return null;
+		}
 		log.info("Saving new user {} to the database", user.getName());
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		return userRepo.save(user);
 	}
 
 	@Override
+	public boolean deleteUser(User user) {
+		User oldUser = userRepo.findByUsername(user.getUsername());
+		if (oldUser == null) {
+			return false;
+		} else {
+			userRepo.deleteByUsername(user.getUsername());
+			return true;
+		}
+	}
+
+	@Override
+	public User updateUser(User user) {
+		User oldUser = userRepo.findByUsername(user.getUsername());
+		if (oldUser == null) {
+			return null;
+		}
+		User newUser = new User();
+		if (user.getName() != null) {
+			newUser.setName(user.getName());
+		} else {
+			newUser.setName(oldUser.getName());
+		}
+
+		if (user.getPassword() != null) {
+			newUser.setPassword(passwordEncoder.encode(user.getPassword()));
+		} else {
+			newUser.setPassword(oldUser.getPassword());
+		}
+
+		newUser.setId(oldUser.getId());
+		newUser.setUsername(oldUser.getUsername());
+		newUser.setRoles(oldUser.getRoles());
+
+		return userRepo.save(newUser);
+	}
+
+	@Override
 	public Role saveRole(Role role) {
+		if (roleRepo.findByName(role.getName()) != null) {
+			return null;
+		}
 		log.info("Saving new role {} to the database", role.getName());
 		return roleRepo.save(role);
 	}
@@ -63,6 +107,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		User user = userRepo.findByUsername(username);
 		Role role = roleRepo.findByName(roleName);
 		user.getRoles().add(role);
+		userRepo.save(user);
 	}
 
 	@Override
